@@ -1,3 +1,116 @@
+#!/bin/bash
+
+#variables de colores
+greenColour="\e[0;32m\033[1m"
+endColour="\033[0m\e[0m"
+redColour="\e[0;31m\033[1m"
+blueColour="\e[0;34m\033[1m"
+yellowColour="\e[0;33m\033[1m"
+purpleColour="\e[0;35m\033[1m"
+turquoiseColour="\e[0;36m\033[1m"
+grayColour="\e[0;37m\033[1m"
+
+#funcion de salir
+function ctrl_c(){
+  echo -e "\n\n [!] Saliendo...\n"
+  exit 1
+}
+
+#Ctrl+C
+trap ctrl_c INT
+
+#funciones
+function helpPanel(){
+ echo -e "\t${yellowColour}[+]${endColour} ${blueColour}Uso${endColour}:"
+ echo -e "\t${redColour}m)${endColour} ${blueColour} Dinero con el que se desea jugar ${endColour}"
+ echo -e "\t${redColour}t)${endColour} ${blueColour} Tecnica a utilizar  ${endColour}"
+}
+
+
+function martingala(){
+  echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e " ${greenColour}[+]${endColour} ${grayColour}Dinero actual:${endColour} ${yellowColour}$money€${endColour}"
+  echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  echo -e "\n ${greenColour}[+]${endColour} ${grayColour}¿Cuánto dinero tienes pensado apostar?${endColour} -> " && read initial_bet
+  echo -e " ${greenColour}[+]${endColour} ${grayColour}¿A qué deseas apostar continuamente (par/impar)?${endColour} -> " && read par_impar
+
+  echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo -e " ${greenColour}[+]${endColour} ${grayColour}Comenzamos con:${endColour} ${yellowColour}$initial_bet€${endColour}"
+  echo -e " ${greenColour}[+]${endColour} ${grayColour}Apuesta continua a:${endColour} ${blueColour}$par_impar${endColour}"
+  echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  back_bet=$initial_bet
+  play_counter=1
+  jugadas_malas="[ "
+
+  while true; do
+    money=$(($money-$initial_bet))
+    echo -e "\n ${purpleColour}[#]${endColour} ${grayColour}Apuestas:${endColour} ${yellowColour}$initial_bet€${endColour}  ${grayColour}| Dinero restante:${endColour} ${yellowColour}$money€${endColour}"
+
+    random_number="$(($RANDOM%37))"
+    echo -e "${turquoiseColour}[#]${endColour} ${grayColour}Número salido:${endColour} ${redColour}$random_number${endColour}"
+
+    if [ ! $money -le 0 ]; then
+     if [ "$par_impar" == "par" ]; then
+        #parte par
+       if [ "$(($random_number % 2))" -eq 0 ]; then
+         if [ "$random_number" -eq 0 ]; then
+           echo -e " ${redColour}[X]${endColour} ${grayColour}Ha salido 0 → pierdes${endColour}"
+         else
+           echo -e " ${greenColour}[✓]${endColour} ${grayColour}El número es par → ¡GANAS!${endColour}"
+           reward=$(($initial_bet*2))
+           echo -e " ${greenColour}[+]${endColour} ${grayColour}Ganancia:${endColour} ${yellowColour}$reward€${endColour}"
+           money=$(($money+$reward))
+           echo -e " ${blueColour}[=]${endColour} ${grayColour}Saldo actual:${endColour} ${yellowColour}$money€${endColour}"
+           initial_bet=$back_bet
+           jugadas_malas=""
+         fi
+       else
+         echo -e " ${redColour}[X]${endColour} ${grayColour}El número es impar → pierdes${endColour}"
+         initial_bet=$(($initial_bet*2))
+         jugadas_malas+="$random_number "
+         echo -e " ${greenColour}[!]${endColour} ${grayColour}Ahora mismo te quedas en:${endColour} ${yellowColour}$money€${endColour}"
+       fi
+       echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+       sleep 2
+     else
+      #parte impar
+      if [ "$(($random_number % 2))" -eq 1 ]; then
+        echo -e " ${greenColour}[✓]${endColour} ${grayColour}El número es impar → ¡GANAS!${endColour}"
+        reward=$(($initial_bet*2))
+        echo -e " ${greenColour}[+]${endColour} ${grayColour}Ganancia:${endColour} ${yellowColour}$reward€${endColour}"
+        money=$(($money+$reward))
+        echo -e " ${blueColour}[=]${endColour} ${grayColour}Saldo actual:${endColour} ${yellowColour}$money€${endColour}"
+        initial_bet=$back_bet
+        jugadas_malas=""
+      else
+       if [ "$random_number" -eq 0 ]; then
+         echo -e "${redColour}[X]${endColour} ${grayColour}Ha salido 0 → pierdes ${endColour} "
+       else
+         echo -e "${redColour}[X]${endColour} ${grayColour}El numero es par  → pierdes ${endColour} "
+       fi
+        initial_bet=$(($initial_bet*2))
+        jugadas_malas+="$random_number "
+        echo -e " ${greenColour}[!]${endColour} ${grayColour}Ahora mismo te quedas en:${endColour} ${yellowColour}$money€${endColour}"
+      fi
+       echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+       sleep 2
+     fi
+    else
+       echo -e "${redColour}  [X]${endColour} ${grayColour}Te has quedado a 0 cabroncete${endColour}"
+       echo -e "${greenColour}[#]${endColour} ${grayColour}Han habido un total de${endColour} ${yellowColour}$play_counter${endColour} ${grayColour}jugadas${endColour}"
+       echo -e "${blueColour} [!]${endColour} ${grayColour}Las malas jugadas han sido: ${endColour}"
+       echo -e "${yellowColour}$jugadas_malas${endColour}"
+       exit 0
+    fi
+
+    let play_counter+=1
+       echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  done
+}
+
+
+
 function inverse(){
  echo -e "\n------------------------------------------------------"
  echo -e "[+] Dinero actual: $money€"
